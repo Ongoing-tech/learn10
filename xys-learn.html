@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小勇士学习冒险岛</title>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --secondary: #2196F3;
+            --accent: #FF9800;
+            --light: #f5f5f5;
+            --dark: #333;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', sans-serif;
+        }
+        
+        body {
+            background-color: #f0f8ff;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .score-display {
+            font-size: 2rem;
+            background: white;
+            color: var(--dark);
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 50px;
+            margin: 10px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .tab.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .task-card, .reward-card {
+            background: var(--light);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 5px solid var(--accent);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .task-header, .reward-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .task-title, .reward-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .task-points, .reward-points {
+            background: var(--accent);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+        }
+        
+        .task-description, .reward-description {
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-complete {
+            background: var(--primary);
+        }
+        
+        .btn-redeem {
+            background: var(--accent);
+        }
+        
+        .btn-export {
+            background: #9C27B0;
+        }
+        
+        .task-input, .reward-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .admin-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .achievement-badge {
+            display: inline-block;
+            background: gold;
+            color: var(--dark);
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin: 5px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>小勇士学习冒险岛</h1>
+            <p>完成任务，收集积分，兑换超酷奖励！</p>
+            <div class="score-display">
+                当前积分: <span id="current-score">0</span>
+            </div>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="tasks">学习任务</div>
+            <div class="tab" data-tab="rewards">奖励商店</div>
+            <div class="tab" data-tab="achievements">成就徽章</div>
+        </div>
+        
+        <div class="tab-content active" id="tasks-content">
+            <h2>今日学习任务</h2>
+            <div id="tasks-list">
+                <!-- 任务将通过JavaScript动态添加 -->
+            </div>
+        </div>
+        
+        <div class="tab-content" id="rewards-content">
+            <h2>奖励商店</h2>
+            <div id="rewards-list">
+                <!-- 奖励将通过JavaScript动态添加 -->
+            </div>
+        </div>
+        
+        <div class="tab-content" id="achievements-content">
+            <h2>成就徽章</h2>
+            <div id="achievements-list">
+                <!-- 成就将通过JavaScript动态添加 -->
+            </div>
+        </div>
+        
+        <div class="admin-panel">
+            <h2>家长管理区</h2>
+            <div class="form-group">
+                <label for="new-task-title">新任务标题</label>
+                <input type="text" id="new-task-title" class="task-input" placeholder="例如: 记忆10个英语单词">
+            </div>
+            <div class="form-group">
+                <label for="new-task-description">任务描述</label>
+                <input type="text" id="new-task-description" class="task-input" placeholder="例如: 学习并记住10个新单词">
+            </div>
+            <div class="form-group">
+                <label for="new-task-points">任务积分</label>
+                <input type="number" id="new-task-points" class="task-input" min="1" value="10">
+            </div>
+            <button class="btn" id="add-task">添加任务</button>
+            
+            <hr style="margin: 20px 0;">
+            
+            <div class="form-group">
+                <label for="new-reward-title">新奖励名称</label>
+                <input type="text" id="new-reward-title" class="reward-input" placeholder="例如: 乐高玩具">
+            </div>
+            <div class="form-group">
+                <label for="new-reward-description">奖励描述</label>
+                <input type="text" id="new-reward-description" class="reward-input" placeholder="例如: 一套乐高积木">
+            </div>
+            <div class="form-group">
+                <label for="new-reward-points">所需积分</label>
+                <input type="number" id="new-reward-points" class="reward-input" min="1" value="50">
+            </div>
+            <button class="btn" id="add-reward">添加奖励</button>
+            
+            <hr style="margin: 20px 0;">
+            
+            <button class="btn btn-export" id="export-data">导出数据到Excel</button>
+            <button class="btn" id="reset-data" style="background: #f44336;">重置所有数据</button>
+        </div>
+    </div>
+    
+    <!-- 任务完成确认模态框 -->
+    <div class="modal" id="task-complete-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>任务完成！</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <p>恭喜你完成了任务: <span id="completed-task-name"></span></p>
+            <p>你获得了 <span id="earned-points"></span> 积分！</p>
+            <button class="btn btn-complete" id="confirm-task-complete">太棒了！</button>
+        </div>
+    </div>
+    
+    <!-- 奖励兑换确认模态框 -->
+    <div class="modal" id="reward-redeem-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>兑换奖励</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <p>你确定要兑换: <span id="redeem-reward-name"></span> 吗？</p>
+            <p>这将花费 <span id="redeem-cost"></span> 积分。</p>
+            <button class="btn btn-redeem" id="confirm-redeem">确认兑换</button>
+            <button class="btn" id="cancel-redeem" style="background: #9E9E9E;">取消</button>
+        </div>
+    </div>
+
+    <script>
+        // 应用数据模型
+        const appData = {
+            score: 0,
+            tasks: [
+                { id: 1, title: "记忆10个英语单词", description: "学习并记住10个新单词", points: 10, completed: false },
+                { id: 2, title: "完成数学练习题", description: "解决5道数学题目", points: 15, completed: false },
+                { id: 3, title: "阅读故事书15分钟", description: "专心阅读故事书15分钟", points: 10, completed: false }
+            ],
+            rewards: [
+                { id: 1, title: "乐高玩具", description: "一套酷炫的乐高积木", points: 100 },
+                { id: 2, title: "冰淇淋券", description: "兑换一份美味冰淇淋", points: 30 },
+                { id: 3, title: "额外游戏时间", description: "增加30分钟游戏时间", points: 50 }
+            ],
+            achievements: [
+                { id: 1, title: "学习小能手", description: "完成5个学习任务", earned: false },
+                { id: 2, title: "积分收集者", description: "累计获得100积分", earned: false },
+                { id: 3, title: "任务大师", description: "一天内完成3个任务", earned: false }
+            ],
+            completedTasks: [],
+            redeemedRewards: []
+        };
+
+        // DOM元素
+        const currentScoreElement = document.getElementById('current-score');
+        const tasksListElement = document.getElementById('tasks-list');
+        const rewardsListElement = document.getElementById('rewards-list');
+        const achievementsListElement = document.getElementById('achievements-list');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // 初始化应用
+        function initApp() {
+            // 从localStorage加载数据
+            const savedData = localStorage.getItem('learningAdventureData');
+            if (savedData) {
+                Object.assign(appData, JSON.parse(savedData));
+            }
+            
+            // 更新UI
+            updateScoreDisplay();
+            renderTasks();
+            renderRewards();
+            renderAchievements();
+            
+            // 设置事件监听器
+            setupEventListeners();
+        }
+        
+        // 更新积分显示
+        function updateScoreDisplay() {
+            currentScoreElement.textContent = appData.score;
+        }
+        
+        // 渲染任务列表
+        function renderTasks() {
+            tasksListElement.innerHTML = '';
+            
+            appData.tasks.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = 'task-card';
+                taskElement.innerHTML = `
+                    <div class="task-header">
+                        <div class="task-title">${task.title}</div>
+                        <div class="task-points">+${task.points} 积分</div>
+                    </div>
+                    <div class="task-description">${task.description}</div>
+                    <button class="btn btn-complete" data-task-id="${task.id}" ${task.completed ? 'disabled' : ''}>
+                        ${task.completed ? '已完成' : '完成任务'}
+                    </button>
+                `;
+                tasksListElement.appendChild(taskElement);
+            });
+        }
+        
+        // 渲染奖励列表
+        function renderRewards() {
+            rewardsListElement.innerHTML = '';
+            
+            appData.rewards.forEach(reward => {
+                const canRedeem = appData.score >= reward.points;
+                const rewardElement = document.createElement('div');
+                rewardElement.className = 'reward-card';
+                rewardElement.innerHTML = `
+                    <div class="reward-header">
+                        <div class="reward-title">${reward.title}</div>
+                        <div class="reward-points">${reward.points} 积分</div>
+                    </div>
+                    <div class="reward-description">${reward.description}</div>
+                    <button class="btn btn-redeem" data-reward-id="${reward.id}" ${!canRedeem ? 'disabled' : ''}>
+                        ${canRedeem ? '兑换奖励' : '积分不足'}
+                    </button>
+                `;
+                rewardsListElement.appendChild(rewardElement);
+            });
+        }
+        
+        // 渲染成就列表
+        function renderAchievements() {
+            achievementsListElement.innerHTML = '';
+            
+            appData.achievements.forEach(achievement => {
+                const achievementElement = document.createElement('div');
+                achievementElement.className = 'task-card';
+                achievementElement.innerHTML = `
+                    <div class="task-header">
+                        <div class="task-title">${achievement.title}</div>
+                        <div class="achievement-badge" style="background: ${achievement.earned ? 'gold' : '#ddd'};">
+                            ${achievement.earned ? '已获得' : '未获得'}
+                        </div>
+                    </div>
+                    <div class="task-description">${achievement.description}</div>
+                `;
+                achievementsListElement.appendChild(achievementElement);
+            });
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 标签切换
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // 更新活动标签
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // 更新活动内容
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === `${tabId}-content`) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            // 完成任务
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('btn-complete') && !e.target.disabled) {
+                    const taskId = parseInt(e.target.getAttribute('data-task-id'));
+                    completeTask(taskId);
+                }
+            });
+            
+            // 兑换奖励
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('btn-redeem') && !e.target.disabled) {
+                    const rewardId = parseInt(e.target.getAttribute('data-reward-id'));
+                    openRedeemModal(rewardId);
+                }
+            });
+            
+            // 添加任务
+            document.getElementById('add-task').addEventListener('click', addNewTask);
+            
+            // 添加奖励
+            document.getElementById('add-reward').addEventListener('click', addNewReward);
+            
+            // 导出数据
+            document.getElementById('export-data').addEventListener('click', exportData);
+            
+            // 重置数据
+            document.getElementById('reset-data').addEventListener('click', resetData);
+            
+            // 模态框关闭
+            document.querySelectorAll('.close-modal').forEach(button => {
+                button.addEventListener('click', closeModals);
+            });
+            
+            document.getElementById('confirm-task-complete').addEventListener('click', closeModals);
+            document.getElementById('cancel-redeem').addEventListener('click', closeModals);
+            document.getElementById('confirm-redeem').addEventListener('click', confirmRedeem);
+        }
+        
+        // 完成任务
+        function completeTask(taskId) {
+            const task = appData.tasks.find(t => t.id === taskId);
+            if (task && !task.completed) {
+                task.completed = true;
+                appData.score += task.points;
+                
+                // 记录完成的任务
+                appData.completedTasks.push({
+                    taskId: task.id,
+                    taskTitle: task.title,
+                    completedAt: new Date().toISOString(),
+                    pointsEarned: task.points
+                });
+                
+                // 更新UI
+                updateScoreDisplay();
+                renderTasks();
+                renderRewards();
+                checkAchievements();
+                
+                // 显示完成模态框
+                document.getElementById('completed-task-name').textContent = task.title;
+                document.getElementById('earned-points').textContent = task.points;
+                document.getElementById('task-complete-modal').style.display = 'flex';
+                
+                // 保存数据
+                saveData();
+            }
+        }
+        
+        // 打开兑换模态框
+        function openRedeemModal(rewardId) {
+            const reward = appData.rewards.find(r => r.id === rewardId);
+            if (reward) {
+                document.getElementById('redeem-reward-name').textContent = reward.title;
+                document.getElementById('redeem-cost').textContent = reward.points;
+                document.getElementById('reward-redeem-modal').style.display = 'flex';
+                document.getElementById('confirm-redeem').setAttribute('data-reward-id', rewardId);
+            }
+        }
+        
+        // 确认兑换
+        function confirmRedeem() {
+            const rewardId = parseInt(document.getElementById('confirm-redeem').getAttribute('data-reward-id'));
+            const reward = appData.rewards.find(r => r.id === rewardId);
+            
+            if (reward && appData.score >= reward.points) {
+                appData.score -= reward.points;
+                
+                // 记录兑换的奖励
+                appData.redeemedRewards.push({
+                    rewardId: reward.id,
+                    rewardTitle: reward.title,
+                    redeemedAt: new Date().toISOString(),
+                    pointsSpent: reward.points
+                });
+                
+                // 更新UI
+                updateScoreDisplay();
+                renderRewards();
+                checkAchievements();
+                
+                // 关闭模态框
+                closeModals();
+                
+                // 保存数据
+                saveData();
+                
+                alert(`恭喜你成功兑换了 ${reward.title}！`);
+            }
+        }
+        
+        // 添加新任务
+        function addNewTask() {
+            const title = document.getElementById('new-task-title').value.trim();
+            const description = document.getElementById('new-task-description').value.trim();
+            const points = parseInt(document.getElementById('new-task-points').value);
+            
+            if (title && description && points > 0) {
+                const newTask = {
+                    id: Date.now(), // 简单ID生成
+                    title,
+                    description,
+                    points,
+                    completed: false
+                };
+                
+                appData.tasks.push(newTask);
+                renderTasks();
+                
+                // 清空表单
+                document.getElementById('new-task-title').value = '';
+                document.getElementById('new-task-description').value = '';
+                document.getElementById('new-task-points').value = '10';
+                
+                // 保存数据
+                saveData();
+            } else {
+                alert('请填写所有字段，并确保积分为正数');
+            }
+        }
+        
+        // 添加新奖励
+        function addNewReward() {
+            const title = document.getElementById('new-reward-title').value.trim();
+            const description = document.getElementById('new-reward-description').value.trim();
+            const points = parseInt(document.getElementById('new-reward-points').value);
+            
+            if (title && description && points > 0) {
+                const newReward = {
+                    id: Date.now(), // 简单ID生成
+                    title,
+                    description,
+                    points
+                };
+                
+                appData.rewards.push(newReward);
+                renderRewards();
+                
+                // 清空表单
+                document.getElementById('new-reward-title').value = '';
+                document.getElementById('new-reward-description').value = '';
+                document.getElementById('new-reward-points').value = '50';
+                
+                // 保存数据
+                saveData();
+            } else {
+                alert('请填写所有字段，并确保积分为正数');
+            }
+        }
+        
+        // 检查成就
+        function checkAchievements() {
+            // 学习小能手: 完成5个学习任务
+            const completedTasksCount = appData.completedTasks.length;
+            if (completedTasksCount >= 5) {
+                appData.achievements[0].earned = true;
+            }
+            
+            // 积分收集者: 累计获得100积分
+            const totalPointsEarned = appData.completedTasks.reduce((sum, task) => sum + task.pointsEarned, 0);
+            if (totalPointsEarned >= 100) {
+                appData.achievements[1].earned = true;
+            }
+            
+            // 任务大师: 一天内完成3个任务
+            // 简化实现：检查今天是否完成了3个任务
+            const today = new Date().toDateString();
+            const todayTasks = appData.completedTasks.filter(task => 
+                new Date(task.completedAt).toDateString() === today
+            );
+            if (todayTasks.length >= 3) {
+                appData.achievements[2].earned = true;
+            }
+            
+            renderAchievements();
+        }
+        
+        // 导出数据到Excel
+        function exportData() {
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+            
+            // 创建任务完成记录表
+            const taskData = appData.completedTasks.map(task => ({
+                '任务名称': task.taskTitle,
+                '完成时间': new Date(task.completedAt).toLocaleString('zh-CN'),
+                '获得积分': task.pointsEarned
+            }));
+            
+            const taskWs = XLSX.utils.json_to_sheet(taskData);
+            XLSX.utils.book_append_sheet(wb, taskWs, '任务完成记录');
+            
+            // 创建奖励兑换记录表
+            const rewardData = appData.redeemedRewards.map(reward => ({
+                '奖励名称': reward.rewardTitle,
+                '兑换时间': new Date(reward.redeemedAt).toLocaleString('zh-CN'),
+                '消耗积分': reward.pointsSpent
+            }));
+            
+            const rewardWs = XLSX.utils.json_to_sheet(rewardData);
+            XLSX.utils.book_append_sheet(wb, rewardWs, '奖励兑换记录');
+            
+            // 创建积分统计表
+            const totalEarned = appData.completedTasks.reduce((sum, task) => sum + task.pointsEarned, 0);
+            const totalSpent = appData.redeemedRewards.reduce((sum, reward) => sum + reward.pointsSpent, 0);
+            
+            const statsData = [
+                {'统计项': '总获得积分', '数值': totalEarned},
+                {'统计项': '总消耗积分', '数值': totalSpent},
+                {'统计项': '当前积分', '数值': appData.score},
+                {'统计项': '完成任务数', '数值': appData.completedTasks.length},
+                {'统计项': '兑换奖励数', '数值': appData.redeemedRewards.length}
+            ];
+            
+            const statsWs = XLSX.utils.json_to_sheet(statsData);
+            XLSX.utils.book_append_sheet(wb, statsWs, '学习统计');
+            
+            // 导出Excel文件
+            XLSX.writeFile(wb, '学习冒险岛数据.xlsx');
+        }
+        
+        // 重置所有数据
+        function resetData() {
+            if (confirm('确定要重置所有数据吗？这将清除所有任务进度、积分和兑换记录。')) {
+                // 重置应用数据
+                appData.score = 0;
+                appData.tasks.forEach(task => task.completed = false);
+                appData.completedTasks = [];
+                appData.redeemedRewards = [];
+                appData.achievements.forEach(achievement => achievement.earned = false);
+                
+                // 更新UI
+                updateScoreDisplay();
+                renderTasks();
+                renderRewards();
+                renderAchievements();
+                
+                // 保存数据
+                saveData();
+                
+                alert('数据已重置！');
+            }
+        }
+        
+        // 关闭所有模态框
+        function closeModals() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.style.display = 'none';
+            });
+        }
+        
+        // 保存数据到localStorage
+        function saveData() {
+            localStorage.setItem('learningAdventureData', JSON.stringify(appData));
+        }
+        
+        // 初始化应用
+        initApp();
+    </script>
+</body>
+</html>
